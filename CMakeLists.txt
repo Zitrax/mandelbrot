@@ -3,7 +3,6 @@ project (Mandelbrot)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-
 # Let CMake search for a raylib-config.cmake
 find_package(raylib 2.5 QUIET)
 
@@ -27,3 +26,4 @@ endif()
     
 add_executable(Mandelbrot mandelbrot.cpp)
 target_link_libraries(Mandelbrot raylib)
+target_compile_options(Mandelbrot PRIVATE /W4 /O2)
