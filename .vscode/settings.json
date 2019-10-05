@@ -2,6 +2,8 @@
     "files.associations": {
         "array": "cpp",
         "xiosbase": "cpp",
-        "execution": "cpp"
+        "execution": "cpp",
+        "xstring": "cpp",
+        "complex": "cpp"
     }
 }
