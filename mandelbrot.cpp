@@ -17,8 +17,8 @@ auto mandel(cmp z, cmp c)
     return std::pow(z, 2) + c;
 }
 
-const int screenWidth = 1920;
-const int screenHeight = 1280;
+const int screenWidth = 1024;
+const int screenHeight = 768;
 const uint8_t N = 50;
 
 // Check if we diverge and are thus in the Mandelbrot set
@@ -64,7 +64,7 @@ auto draw(std::array<uint8_t, screenHeight * screenWidth> &buffer, cmp z = 0)
 int main()
 {
     InitWindow(screenWidth, screenHeight, "raylib [shapes] example - basic shapes drawing");
-    ToggleFullscreen();
+    //ToggleFullscreen();
 
     const int fps = 60;
     SetTargetFPS(fps);

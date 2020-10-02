@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 3.14)
+cmake_minimum_required (VERSION 3.15)
 project (Mandelbrot)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -7,14 +7,14 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Let CMake search for a raylib-config.cmake
-find_package(raylib 2.5 QUIET)
+find_package(raylib 3.0 QUIET)
 
 # If there's none, fetch and build raylib
 if (NOT raylib_FOUND)
 include(FetchContent)
 FetchContent_Declare(
     raylib
-    URL https://github.com/raysan5/raylib/archive/2.5.0.tar.gz
+    URL https://github.com/raysan5/raylib/archive/3.0.0.tar.gz
     )
     FetchContent_GetProperties(raylib)
     if (NOT raylib_POPULATED) # Have we downloaded raylib yet?
@@ -29,4 +29,5 @@ endif()
     
 add_executable(Mandelbrot mandelbrot.cpp)
 target_link_libraries(Mandelbrot raylib)
-target_compile_options(Mandelbrot PRIVATE /W4 /O2)
+target_compile_options(Mandelbrot PRIVATE "$<$<CONFIG:DEBUG>:/W4;/WX;/Od>")
+target_compile_options(Mandelbrot PRIVATE "$<$<CONFIG:RELEASE>:/W4;/WX;/Ox>")
