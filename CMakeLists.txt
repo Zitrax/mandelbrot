@@ -22,6 +22,7 @@ FetchContent_Declare(
     FetchContent_Populate(raylib)
     set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE) # don't build the supplied examples
     set(BUILD_GAMES    OFF CACHE BOOL "" FORCE) # or games
+    set(GRAPHICS GRAPHICS_API_OPENGL_21 CACHE STRING "" FORCE) # Linux only?
     # build raylib
     add_subdirectory(${raylib_SOURCE_DIR} ${raylib_BINARY_DIR})
     endif()
@@ -29,5 +30,11 @@ endif()
     
 add_executable(Mandelbrot mandelbrot.cpp)
 target_link_libraries(Mandelbrot raylib)
-target_compile_options(Mandelbrot PRIVATE "$<$<CONFIG:DEBUG>:/W4;/WX;/Od>")
-target_compile_options(Mandelbrot PRIVATE "$<$<CONFIG:RELEASE>:/W4;/WX;/Ox>")
+if(MSVC)
+  target_compile_options(Mandelbrot PRIVATE "$<$<CONFIG:DEBUG>:/W4;/WX;/Od>")
+  target_compile_options(Mandelbrot PRIVATE "$<$<CONFIG:RELEASE>:/W4;/WX;/Ox>")
+else()
+  target_link_libraries(Mandelbrot tbb)
+  target_compile_options(Mandelbrot PRIVATE "$<$<CONFIG:DEBUG>:-Werror;-Wall;-Wextra;-pedantic;-O0;-g>")
+  target_compile_options(Mandelbrot PRIVATE "$<$<CONFIG:RELEASE>:-Werror;-Wall;-Wextra;-pedantic;-O3>")
+endif()

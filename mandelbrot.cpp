@@ -1,14 +1,15 @@
 #include <algorithm>
 #include <array>
-#include <execution>
 #include <complex>
+#include <execution>
 #include <iostream>
+#include <memory>
 
 #include <raylib.h>
 
 using namespace std::complex_literals;
 
-using ctype = double;
+using ctype = long double;
 using cmp = std::complex<ctype>;
 
 // f(z) = z^2 + c
@@ -17,9 +18,11 @@ auto mandel(cmp z, cmp c)
     return std::pow(z, 2) + c;
 }
 
-const int screenWidth = 1024;
-const int screenHeight = 768;
-const uint8_t N = 50;
+constexpr int screenWidth = 1024;
+constexpr int screenHeight = 768;
+constexpr uint8_t N = 50;
+using screen = std::array<uint8_t, screenHeight * screenWidth>;
+
 
 // Check if we diverge and are thus in the Mandelbrot set
 uint8_t mandelRes(cmp c, cmp z = 0)
@@ -51,7 +54,7 @@ ctype scaleY(ctype y)
     return zoom * 2 * (y / screenHeight) - zoom * 1 + y_offset;
 }
 
-auto draw(std::array<uint8_t, screenHeight * screenWidth> &buffer, cmp z = 0)
+auto calc(screen &buffer, cmp z = 0)
 {
     std::transform(std::execution::par, buffer.begin(), buffer.end(), buffer.begin(), [&](auto &p) {
         const size_t i = &p - &buffer[0];
@@ -61,66 +64,86 @@ auto draw(std::array<uint8_t, screenHeight * screenWidth> &buffer, cmp z = 0)
     });
 }
 
+void draw(int xp, int yp, int w, int h, int frame, const screen& buffer)
+{
+  for (int x = xp; x < xp+w; ++x) {
+    for (int y = yp; y < yp+h; ++y) {
+      unsigned char val = buffer.at(x + screenWidth * y);
+      DrawPixel(x, y, Color{(unsigned char)(val * frame % 256),
+                            (unsigned char)(val + frame % 256),
+                            (unsigned char)(val - frame % 256), 255});
+    }
+  }
+}
+
 int main()
 {
-    InitWindow(screenWidth, screenHeight, "raylib [shapes] example - basic shapes drawing");
+    InitWindow(screenWidth, screenHeight, "Mandelbrot testing");
     //ToggleFullscreen();
 
-    const int fps = 60;
-    SetTargetFPS(fps);
+  constexpr int fps = 60;
+  SetTargetFPS(fps);
 
-    auto buffer = std::make_unique<std::array<uint8_t, screenHeight * screenWidth>>();
+  auto buffer = std::make_unique<screen>();
 
-    cmp z = 0;
-    int frame = 0;
-    while (!WindowShouldClose()) // Detect window close button or ESC key
+  // cmp z = 0;
+  bool first = true;
+  int frame = 0;
+  int zoom_step = 1;
+  bool changed = true;
+  ClearBackground(BLACK);
+  while (!WindowShouldClose()) // Detect window close button or ESC key
+  {
+    changed = true;
+    if (IsKeyDown(KEY_UP))
     {
-        BeginDrawing();
-        ClearBackground(BLACK);
-
-        if (IsKeyDown(KEY_UP))
-        {
-            y_offset -= 0.05f;
-        }
-        if (IsKeyDown(KEY_DOWN))
-        {
-            y_offset += 0.05f;
-        }
-        if (IsKeyDown(KEY_RIGHT))
-        {
-            x_offset += 0.05f;
-        }
-        if (IsKeyDown(KEY_LEFT))
-        {
-            x_offset -= 0.05f;
-        }
-        if (IsKeyDown(KEY_KP_ADD))
-        {
-            zoom -= 0.05f;
-        }
-        if (IsKeyDown(KEY_KP_SUBTRACT))
-        {
-            zoom += (2-zoom) * 0.05f;
-        }
-
-        draw(*buffer);      
-
-        for (int x = 0; x < screenWidth; ++x)
-        {
-            for (int y = 0; y < screenHeight; ++y)
-            {
-                unsigned char val = buffer->at(x + screenWidth * y);
-                DrawPixel(x, y, Color{(unsigned char)(val * frame % 256), (unsigned char)(val + frame % 256), (unsigned char)(val - frame % 256), 255});
-            }
-        }
-
-
-        DrawText("Mandelbrot set test", 20, 20, 20, DARKGRAY);
-        DrawText(std::to_string(GetFPS()).c_str(), screenWidth - 100, 20, 20, DARKGRAY);
-        EndDrawing();
+      y_offset -= zoom*0.05f;
     }
+    else if (IsKeyDown(KEY_DOWN))
+    {
+      y_offset += zoom*0.05f;
+    }
+    else if (IsKeyDown(KEY_RIGHT))
+    {
+      x_offset += zoom*0.05f;
+    }
+    else if (IsKeyDown(KEY_LEFT))
+    {
+      x_offset -= zoom*0.05f;
+    }
+    else if (IsKeyDown(KEY_KP_ADD))
+    {
+      zoom_step++;
+      zoom = 1.0/zoom_step;
+    }
+    else if (IsKeyDown(KEY_KP_SUBTRACT))
+    {
+      if(zoom_step>1)
+        zoom_step--;
+      zoom = 1.0/zoom_step;
+    }
+    else if(!first)
+    {
+      changed = false;
+    }
+    first = false;
 
-    CloseWindow(); // Close window and OpenGL context
+    BeginDrawing();
+    if (changed)
+    {
+      calc(*buffer);
+      draw(0, 0, screenWidth, screenHeight, frame, *buffer);
+      DrawText("Mandelbrot set test", 20, 20, 20, DARKGRAY);
+    } else {
+      draw(screenWidth-100, 20, 100, 20, frame, *buffer);
+    }
+    
+    DrawText(std::to_string(GetFPS()).c_str(), screenWidth - 100, 20, 20, DARKGRAY);
+    //DrawText(std::to_string(zoom).c_str(), screenWidth - 100, 20, 20, DARKGRAY);
+    EndDrawing();
+  }
 
-    return 0;
+  CloseWindow(); // Close window and OpenGL context
+
+  return 0;
 }
