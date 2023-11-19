@@ -53,5 +53,6 @@
         "xstddef": "cpp",
         "xtr1common": "cpp",
         "xutility": "cpp"
-    }
+    },
+    "sonarlint.pathToCompileCommands": "${workspaceFolder}\\build\\release\\compile_commands.json"
 }
